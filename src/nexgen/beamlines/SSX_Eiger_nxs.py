@@ -88,7 +88,7 @@ def ssx_eiger_writer(
         ssx_params["stop_time"] = None
 
     SSX = ssx_collect(
-        num_imgs=int(num_imgs),
+        num_imgs=num_imgs,
         exposure_time=ssx_params["exp_time"]
         if find_in_dict("exp_time", ssx_params)
         else None,
@@ -114,7 +114,9 @@ def ssx_eiger_writer(
         chip_info=ssx_params["chip_info"]
         if find_in_dict("chip_info", ssx_params)
         else None,
-        chipmap=ssx_params["chipmap"] if find_in_dict("chipmap", ssx_params) else None,
+        chipmap=ssx_params["chipmap"]
+        if find_in_dict("chipmap", ssx_params)
+        else None,
     )
 
     if expt_type.lower() not in ["extruder", "fixed-target", "3Dgridscan"]:
@@ -129,13 +131,13 @@ def ssx_eiger_writer(
     logger.info(f"Current collection directory: {visitpath.as_posix()}")
     # Get NeXus filename
     master_file = visitpath / f"{filename}.nxs"
-    logger.info("NeXus file will be saved as %s" % master_file.as_posix())
+    logger.info(f"NeXus file will be saved as {master_file.as_posix()}")
 
     # Get parameters depending on beamline
     logger.info(f"DLS Beamline: {beamline.upper()}.")
     if "I19" in beamline.upper():
         source = Source("I19-2")
-        osc_axis = ssx_params["osc_axis"] if "osc_axis" in ssx_params.keys() else "phi"
+        osc_axis = ssx_params.get("osc_axis", "phi")
         from .I19_2_params import I19_2Eiger as axes_params
 
         eiger_params = EigerDetector(
@@ -173,7 +175,7 @@ def ssx_eiger_writer(
 
     # Get pump information
     pump_probe = PumpProbe()
-    if pump_status is True:
+    if pump_status:
         # Exposure and delay could also be found in dictionary for grid scan
         logger.info("Pump status is True.")
         pump_probe.pump_status = pump_status
@@ -198,7 +200,9 @@ def ssx_eiger_writer(
     # Find metafile in directory and get info from it
     try:
         metafile = [
-            f for f in visitpath.iterdir() if filename + "_meta" in f.as_posix()
+            f
+            for f in visitpath.iterdir()
+            if f"{filename}_meta" in f.as_posix()
         ][0]
         logger.debug(f"Found {metafile} in directory.")
     except IndexError as err:
@@ -326,7 +330,7 @@ def ssx_eiger_writer(
             tot_num_imgs,
         )
         NXmx_Writer.write(start_time=timestamps[0])
-        if pump_status is True:
+        if pump_status:
             logger.info("Write pump information to file.")
             NXmx_Writer.add_NXnote(
                 notes=pump_info,

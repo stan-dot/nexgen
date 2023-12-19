@@ -311,7 +311,7 @@ class NXmxFileWriter:
                     vds_shape=vds_shape,
                     data_type=vds_dtype,
                 )
-            if clean_up is True:
+            if clean_up:
                 nxmx_logger.warning("Starting clean up of unused links.")
                 clean_unused_links(
                     nxs,

@@ -8,7 +8,7 @@ def test_pump_probe():
     pump_probe = PumpProbe()
     pump_probe.pump_status = True
     pump_probe.pump_exposure = 0.01
-    assert pump_probe.pump_status is True
+    assert pump_probe.pump_status
     assert pump_probe.pump_exposure == 0.01
     assert pump_probe.pump_delay is None
 
@@ -36,5 +36,5 @@ def test_beamline_axes():
         fast_axis=(0, 1, 0),
         slow_axis=(1, 0, 0),
     )
-    assert isinstance(bl.fast_axis, Point3D) is True
-    assert isinstance(bl.slow_axis, Point3D) is True
+    assert isinstance(bl.fast_axis, Point3D)
+    assert isinstance(bl.slow_axis, Point3D)

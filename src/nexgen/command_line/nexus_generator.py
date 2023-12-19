@@ -184,12 +184,12 @@ def write_NXmx_cli(args):
     logger.info("NeXus file writer for existing dataset.")
 
     # Add some information to logger
-    logger.info("Create a NeXus file for %s" % datafiles[0])
+    logger.info(f"Create a NeXus file for {datafiles[0]}")
     logger.info(
         "Number of experiment data files in directory, linked to the Nexus file: %d"
         % len(datafiles)
     )
-    logger.info("NeXus file will be saved as %s" % master_file)
+    logger.info(f"NeXus file will be saved as {master_file}")
 
     # Load technical info from phil parser
     cf = params.input.coordinate_frame
@@ -238,7 +238,7 @@ def write_NXmx_cli(args):
     else:
         logger.warning("No collection end time recorded.")
 
-    logger.info("Coordinate system: %s" % cf)
+    logger.info(f"Coordinate system: {cf}")
     if cf == "imgcif":
         logger.warning(
             "Input coordinate frame is imgcif. They will be converted to mcstas."
@@ -416,8 +416,8 @@ def write_demo_cli(args):
     data_file_template = get_filename_template(master_file)
 
     # Add some information to logger
-    logger.info("NeXus file will be saved as %s" % params.output.master_filename)
-    logger.info("Data file(s) template: %s" % data_file_template)
+    logger.info(f"NeXus file will be saved as {params.output.master_filename}")
+    logger.info(f"Data file(s) template: {data_file_template}")
 
     # Next: go through technical info (goniometer, detector, beamline etc ...)
     cf = params.input.coordinate_frame
@@ -441,13 +441,13 @@ def write_demo_cli(args):
         data_type = ("images", num_images)
 
     # Log information
-    logger.info("Data type: %s" % data_type[0])
+    logger.info(f"Data type: {data_type[0]}")
 
     logger.info("Source information")
     logger.info(f"Facility: {source.name} - {source.type}.")
     logger.info(f"Beamline / Instrument: {source.beamline_name}")
 
-    logger.info("Coordinate system: %s" % cf)
+    logger.info(f"Coordinate system: {cf}")
     if cf == "imgcif":
         logger.warning(
             "Input coordinate frame is imgcif. They will be converted to mcstas."
@@ -497,7 +497,7 @@ def write_demo_cli(args):
         logger.warning(f"Total number of images updated to: {data_type[1]}")
         logger.warning("\n")
 
-    logger.info("Detector information: %s" % detector.description)
+    logger.info(f"Detector information: {detector.description}")
     logger.info(
         f"Sensor made of {detector.sensor_material} x {detector.sensor_thickness}"
     )
@@ -546,11 +546,7 @@ def write_demo_cli(args):
         n_files = 10 if "10M" in detector.description.upper() else 2
     else:
         # The maximum number of images being written each dataset is 1000
-        if data_type[1] <= 1000:
-            n_files = 1
-        else:
-            n_files = int(np.ceil(data_type[1] / 1000))
-
+        n_files = 1 if data_type[1] <= 1000 else int(np.ceil(data_type[1] / 1000))
     logger.info("%d file(s) containing blank data to be written." % n_files)
 
     # Get datafile list

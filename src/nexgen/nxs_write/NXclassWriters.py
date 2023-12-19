@@ -90,7 +90,7 @@ def write_NXdata(
     """
     NXclass_logger.info("Start writing NXdata.")
     # Check that a valid datafile_list has been passed.
-    if len(datafiles) == 0:
+    if not datafiles:
         raise OSError(
             "No HDF5 data filenames have been found. Please pass at least one."
         )
@@ -102,7 +102,7 @@ def write_NXdata(
     nxdata = nxsfile.require_group("/entry/data")
     create_attributes(
         nxdata,
-        ("NX_class", "axes", "signal", osc_axis + "_indices"),
+        ("NX_class", "axes", "signal", f"{osc_axis}_indices"),
         (
             "NXdata",
             osc_axis,
@@ -132,7 +132,7 @@ def write_NXdata(
             mf = datafiles[0].stem.replace(tbr, "meta") + datafiles[0].suffix
             meta = [f for f in datafiles[0].parent.iterdir() if mf in f.as_posix()]
         # If metafile is not found, link to the data files
-        if len(meta) == 0:
+        if not meta:
             for filename in datafiles:
                 nxdata[filename.stem] = h5py.ExternalLink(filename.name, "/")
         else:
@@ -238,9 +238,7 @@ def write_NXsample(
     # Get xy details if passed
     scan_axes = []
     if transl_scan:
-        for k in transl_scan.keys():
-            scan_axes.append(k)
-
+        scan_axes.extend(iter(transl_scan))
     # Create sample_{axisname} groups
     for idx, ax in enumerate(goniometer["axes"]):
         grp_name = f"sample_{ax[-1]}" if "sam_" in ax else f"sample_{ax}"
@@ -274,10 +272,9 @@ def write_NXsample(
             if data_type == "images":
                 increment_set = np.repeat(goniometer["increments"][idx], len(osc_range))
                 nxsample_ax.create_dataset(
-                    ax + "_increment_set",
-                    data=goniometer["increments"][idx],
-                )  # increment_set
-                nxsample_ax.create_dataset(ax + "_end", data=osc_range + increment_set)
+                    f"{ax}_increment_set", data=goniometer["increments"][idx]
+                )
+                nxsample_ax.create_dataset(f"{ax}_end", data=osc_range + increment_set)
         elif ax in scan_axes:
             # For translations
             if (
@@ -474,12 +471,11 @@ def write_NXdetector(
             NXclass_logger.info(
                 f"Looking for file {detector['pixel_mask']} in {wd.as_posix()}."
             )
-            maskfile = [
+            if maskfile := [
                 wd / detector["pixel_mask"]
                 for f in wd.iterdir()
                 if detector["pixel_mask"] == f.name
-            ]
-            if maskfile:
+            ]:
                 NXclass_logger.info("Pixel mask file found in working directory.")
                 write_compressed_copy(
                     nxdetector,
@@ -506,12 +502,11 @@ def write_NXdetector(
             NXclass_logger.info(
                 f"Looking for file {detector['flatfield']} in {wd.as_posix()}."
             )
-            flatfieldfile = [
+            if flatfieldfile := [
                 wd / detector["flatfield"]
                 for f in wd.iterdir()
                 if detector["flatfield"] == f.name
-            ]
-            if flatfieldfile:
+            ]:
                 NXclass_logger.info("Flatfield file found in working directory.")
                 write_compressed_copy(
                     nxdetector,
@@ -641,8 +636,7 @@ def write_NXdetector(
         else:
             grp_dep = detector["depends"][idx]
         _dep = set_dependency(
-            detector["depends"][idx],
-            nxtransformations.name + f"/{grp_dep}/",
+            detector["depends"][idx], f"{nxtransformations.name}/{grp_dep}/"
         )
 
         nxgrp_ax = nxtransformations.create_group(grp_name)
@@ -863,11 +857,10 @@ def write_NXcollection(
     if meta and data_type[0] == "images":
         for l in link_list[1]:
             grp[l] = h5py.ExternalLink(meta.name, detector[l])
-    else:
-        if "software_version" in detector:
-            grp.create_dataset(
-                "software_version", data=np.string_(detector["software_version"])
-            )
+    elif "software_version" in detector:
+        grp.create_dataset(
+            "software_version", data=np.string_(detector["software_version"])
+        )
     if "TRISTAN" in detector["description"].upper():  # or data_type[1] == "events":
         tick = ureg.Quantity(detector["detector_tick"])
         grp.create_dataset("detector_tick", data=tick.magnitude)
@@ -995,8 +988,7 @@ def write_NXcoordinate_system_set(
         f"y: {base_vectors['y'].vector} \n"
         f"z: {base_vectors['z'].vector} \n"
     )
-    idx = 0
-    for k, v in base_vectors.items():
+    for idx, (k, v) in enumerate(base_vectors.items()):
         base = transf.create_dataset(k, data=np.array(origin[idx]))
         create_attributes(
             base,
@@ -1008,4 +1000,3 @@ def write_NXcoordinate_system_set(
                 v.vector,
             ),
         )
-        idx += 1

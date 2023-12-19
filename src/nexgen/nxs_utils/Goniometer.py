@@ -35,9 +35,10 @@ class Goniometer:
             self._check_and_update_goniometer_from_scan(list(self.scan.keys()))
 
     def __repr__(self) -> str:
-        msg = ""
-        for ax in self.axes_list:
-            msg += f"{ax.name}: {ax.start_pos} => {ax.transformation_type} on {ax.depends} \n\t"
+        msg = "".join(
+            f"{ax.name}: {ax.start_pos} => {ax.transformation_type} on {ax.depends} \n\t"
+            for ax in self.axes_list
+        )
         if self.scan:
             msg += f"Scan axis/axes: {list(self.scan.keys())}. \n"
         return f"Goniometer information: \n\t{msg}"
@@ -59,12 +60,10 @@ class Goniometer:
     def _find_axis_in_goniometer(self, val: str) -> int:
         """Find the index of the axis matching the input string."""
         idx = [n for n, ax in enumerate(self.axes_list) if ax.name == val]
-        if len(idx) == 0:
-            return None
-        return idx[0]
+        return None if not idx else idx[0]
 
     def _generate_goniometer_dict(self):
-        goniometer = {
+        return {
             "axes": [ax.name for ax in self.axes_list],
             "depends": [ax.depends for ax in self.axes_list],
             "types": [ax.transformation_type for ax in self.axes_list],
@@ -74,7 +73,6 @@ class Goniometer:
             "increments": [abs(ax.increment) for ax in self.axes_list],
             "ends": [ax.end_pos for ax in self.axes_list],
         }
-        return goniometer
 
     def define_scan_from_goniometer_axes(
         self,
@@ -102,7 +100,7 @@ class Goniometer:
                 )
                 transl_scan = self.scan
 
-            if update is True:
+            if update:
                 self._check_and_update_goniometer_from_scan(scan_axes)
 
             return osc_scan, transl_scan
@@ -181,8 +179,7 @@ class Goniometer:
         )
 
         axis_name = list(scan.keys())[0]
-        scan_length = len(scan[axis_name])
-        return scan_length
+        return len(scan[axis_name])
 
     def to_dict(self):
         """Write the goniometer information to a dictionary."""

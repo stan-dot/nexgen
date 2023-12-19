@@ -50,9 +50,9 @@ def single_image_nexus(
     data_file = Path(data_file).expanduser().resolve()
     tristan_nexus = Path(tristan_nexus).expanduser().resolve()
     nxs_filename = data_file.parent / f"{data_file.stem}.nxs"
-    with h5py.File(tristan_nexus, "r") as nxs_in, h5py.File(
-        nxs_filename, write_mode
-    ) as nxs_out:
+    with (h5py.File(tristan_nexus, "r") as nxs_in, h5py.File(
+            nxs_filename, write_mode
+        ) as nxs_out):
         # Copy the whole tree except for nxdata
         nxentry = get_nexus_tree(nxs_in, nxs_out)
         # Create nxdata group
@@ -64,7 +64,7 @@ def single_image_nexus(
         if ax:
             create_attributes(
                 nxdata,
-                ("NX_class", "axes", "signal", ax + "_indices"),
+                ("NX_class", "axes", "signal", f"{ax}_indices"),
                 (
                     "NXdata",
                     ax,
@@ -133,9 +133,9 @@ def multiple_images_nexus(
     data_file = Path(data_file).expanduser().resolve()
     tristan_nexus = Path(tristan_nexus).expanduser().resolve()
     nxs_filename = data_file.parent / f"{data_file.stem}.nxs"
-    with h5py.File(tristan_nexus, "r") as nxs_in, h5py.File(
-        nxs_filename, write_mode
-    ) as nxs_out:
+    with (h5py.File(tristan_nexus, "r") as nxs_in, h5py.File(
+            nxs_filename, write_mode
+        ) as nxs_out):
         # Copy the whole tree except for nxdata
         nxentry = get_nexus_tree(nxs_in, nxs_out)
         # Create nxdata group
@@ -147,7 +147,7 @@ def multiple_images_nexus(
         if ax:
             create_attributes(
                 nxdata,
-                ("NX_class", "axes", "signal", ax + "_indices"),
+                ("NX_class", "axes", "signal", f"{ax}_indices"),
                 (
                     "NXdata",
                     ax,
@@ -213,9 +213,9 @@ def serial_images_nexus(
     data_file = Path(data_file).expanduser().resolve()
     tristan_nexus = Path(tristan_nexus).expanduser().resolve()
     nxs_filename = data_file.parent / f"{data_file.stem}.nxs"
-    with h5py.File(tristan_nexus, "r") as nxs_in, h5py.File(
-        nxs_filename, write_mode
-    ) as nxs_out:
+    with (h5py.File(tristan_nexus, "r") as nxs_in, h5py.File(
+            nxs_filename, write_mode
+        ) as nxs_out):
         # Copy the whole tree except for nxdata and nxnote (which is where chip info is... or the pump for the old ones)
         nxentry = get_nexus_tree(nxs_in, nxs_out, skip_obj=["NXdata", "NXnote"])
         # Create nxdata group
@@ -227,7 +227,7 @@ def serial_images_nexus(
         if ax:
             create_attributes(
                 nxdata,
-                ("NX_class", "axes", "signal", ax + "_indices"),
+                ("NX_class", "axes", "signal", f"{ax}_indices"),
                 (
                     "NXdata",
                     ax,
@@ -268,7 +268,7 @@ def serial_images_nexus(
             for ax_name, ax_range in transl_ax.items():
                 nxdata.create_dataset(ax_name, data=ax_range)
                 # Get attributes for relevant axis in nxs_in
-                ax_attr = dict(nxs_in["/entry/sample/transformations/" + ax_name].attrs)
+                ax_attr = dict(nxs_in[f"/entry/sample/transformations/{ax_name}"].attrs)
                 for key, value in ax_attr.items():
                     nxdata[ax_name].attrs.create(key, value)
                 convert_scan_axis(nxsample, nxdata, ax_name)

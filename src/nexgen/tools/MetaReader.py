@@ -33,14 +33,13 @@ def overwrite_beam(meta_file: h5py.File, name: str, beam: Dict | ScopeExtract):
     Raises:
         ValueError: If an invalid detector description is passed. Allowed detectors for this function: Eiger.
     """
-    if "eiger" in name.lower():
-        meta = DectrisMetafile(meta_file)
-        wl = meta.get_wavelength()
-        if wl is None:
-            overwrite_logger.info("No wavelength information found in meta file.")
-            return
-    else:
+    if "eiger" not in name.lower():
         raise ValueError("Unknown detector: please pass a valid detector description.")
+    meta = DectrisMetafile(meta_file)
+    wl = meta.get_wavelength()
+    if wl is None:
+        overwrite_logger.info("No wavelength information found in meta file.")
+        return
     # If value exists, overwrite. Otherwise, create.
     overwrite_logger.warning("Wavelength will be overwritten.")
     overwrite_logger.info(f"Value for wavelength found in meta file: {wl}")
@@ -84,7 +83,7 @@ def overwrite_detector(
         overwrite_logger.info("Looking through meta file for Tristan detector.")
         overwrite_logger.info("Number of modules: %d" % new_values["n_modules"])
         overwrite_logger.info(
-            "Found meta_version located at: %s " % new_values["meta_version"]
+            f'Found meta_version located at: {new_values["meta_version"]} '
         )
     elif "eiger" in detector_name:
         meta = DectrisMetafile(meta_file)
@@ -300,7 +299,7 @@ def update_axes_from_meta(
         )
         return
 
-    if use_config is True and meta_file.hasConfig is True:
+    if use_config and meta_file.hasConfig is True:
         config = meta_file.read_config_dset()
     else:
         config = meta_file.read_dectris_config()

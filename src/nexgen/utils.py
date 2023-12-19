@@ -45,9 +45,7 @@ def coerce_to_path(filename: Path | str):
 
 
 def find_in_dict(key: str, params_dict: Dict):
-    if key in list(params_dict.keys()):
-        return True
-    return False
+    return key in list(params_dict.keys())
 
 
 def get_filename_template(input_filename: Path) -> str:
@@ -94,17 +92,16 @@ def get_nexus_filename(input_filename: Path, copy: bool = False) -> Path:
     Returns:
         Path: NeXus file name (.nxs) path.
     """
-    filename_stem = P.fullmatch(input_filename.stem)
-    if filename_stem:
+    if filename_stem := P.fullmatch(input_filename.stem):
         filename = filename_stem[1]
     else:
         filename = input_filename.stem
 
-    if copy is True:
-        nxs_filename = input_filename.parent / f"{filename}_copy.nxs"
-    else:
-        nxs_filename = input_filename.parent / f"{filename}.nxs"
-    return nxs_filename
+    return (
+        input_filename.parent / f"{filename}_copy.nxs"
+        if copy
+        else input_filename.parent / f"{filename}.nxs"
+    )
 
 
 def walk_nxs(nxs_obj: h5py.File | h5py.Group) -> List[str]:
@@ -127,7 +124,7 @@ ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity
 
 
-def units_of_length(q: str | float, to_base: bool = False) -> Q_:  # -> pint.Quantity:
+def units_of_length(q: str | float, to_base: bool = False) -> Q_:    # -> pint.Quantity:
     """
     Check that a quantity of length is compatible with NX_LENGTH, defaulting to m if dimensionless.
 
@@ -149,10 +146,7 @@ def units_of_length(q: str | float, to_base: bool = False) -> Q_:  # -> pint.Qua
         )
     quantity = quantity * ureg.m if quantity.dimensionless else quantity
     if quantity.check("[length]"):
-        if to_base is True:
-            return quantity.to_base_units()
-        else:
-            return quantity
+        return quantity.to_base_units() if to_base else quantity
     else:
         raise pint.errors.DimensionalityError(
             quantity, "a quantity of", quantity.dimensionality, ureg.mm.dimensionality

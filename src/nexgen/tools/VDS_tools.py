@@ -76,16 +76,16 @@ def find_datasets_in_file(nxdata: h5py.Group) -> List:
     Returns:
         dsets (List): The source datasets.
     """
-    # FIXME for now this assumes that the source datasets are always links
-    dsets = []
-    for k in nxdata.keys():
-        if isinstance(nxdata.get(k, getlink=True), h5py.ExternalLink):
-            dsets.append(k)
-    if not dsets:
+    if dsets := [
+        k
+        for k in nxdata.keys()
+        if isinstance(nxdata.get(k, getlink=True), h5py.ExternalLink)
+    ]:
+        return dsets
+    else:
         raise KeyError(
             f"No External Link datasets found in NeXus file under {nxdata.name}"
         )
-    return dsets
 
 
 def split_datasets(
@@ -135,7 +135,7 @@ def split_datasets(
         vds_shape = (data_shape[0] - start_idx, *data_shape[1:])
 
     full_frames = int(data_shape[0])
-    end_cut_frames = int(full_frames - vds_shape[0]) - int(start_idx)
+    end_cut_frames = int(full_frames - vds_shape[0]) - start_idx
 
     result = []
     for dset_name in dsets:
@@ -179,7 +179,7 @@ def create_virtual_layout(datasets: List[Dataset], data_type: DTypeLike):
             dest_end = dest_start + dataset.dest_shape[0]
 
         vsource = h5py.VirtualSource(
-            ".", "/entry/data/" + dataset.name, shape=dataset.source_shape
+            ".", f"/entry/data/{dataset.name}", shape=dataset.source_shape
         )
 
         layout[dest_start:dest_end, :, :] = vsource[
@@ -261,8 +261,8 @@ def jungfrau_vds_writer(
 
     sources = []
     for dset in source_dsets:
-        source_path = dset if external_dsets is True else "."
-        source_name = entry_key if external_dsets is True else f"/entry/data/{dset}"
+        source_path = dset if external_dsets else "."
+        source_name = entry_key if external_dsets else f"/entry/data/{dset}"
         source = h5py.VirtualSource(
             source_path, source_name, shape=(frames, *jungfrau_mod_size)
         )
@@ -352,11 +352,11 @@ def clean_unused_links(
         return
     for i, _ in enumerate(datasets):
         # unlink datasets before the start of VDS
-        if sum(dataset_lengths[0 : i + 1]) < start_index:
+        if sum(dataset_lengths[: i + 1]) < start_index:
             vds_logger.info(f"Removing {dataset_names[i]} link.")
             del nxdata[dataset_names[i]]
         # unlink datasets after the end of VDS
-        if sum(dataset_lengths[0:i]) > start_index + vds_shape[0]:
+        if sum(dataset_lengths[:i]) > start_index + vds_shape[0]:
             vds_logger.info(f"Removing {dataset_names[i]} link.")
             del nxdata[dataset_names[i]]
     vds_logger.info("Links unused in VDS removed from NeXus file.")

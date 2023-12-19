@@ -27,9 +27,7 @@ class SinglaMaster:
     def isDectrisSingla(filename):
         with h5py.File(filename, "r") as fh:
             description = fh["/entry/instrument/detector/description"][()]
-        if b"SINGLA" in description.upper():
-            return True
-        return False
+        return b"SINGLA" in description.upper()
 
     def __init__(self, handle: h5py.File):
         self._handle = handle
@@ -51,111 +49,90 @@ class SinglaMaster:
 
     def get_number_of_images(self) -> int:
         _loc = [obj for obj in self.walk if "nimages" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_number_of_triggers(self) -> int:
         _loc = [obj for obj in self.walk if "ntriggers" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def full_number_of_images(self) -> int:
         return self.get_number_of_images() * self.get_number_of_triggers()
 
     def get_trigger_mode(self) -> str:
         _loc = [obj for obj in self.walk if "trigger_mode" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_mask(self) -> Tuple[bool, ArrayLike]:
-        M = [obj for obj in self.walk if "pixel_mask" in obj]
-        if len(M) > 0:
+        if M := [obj for obj in self.walk if "pixel_mask" in obj]:
             mask_path = [_loc for _loc in M if _loc.split("/")[-1] == "pixel_mask"]
-            mask_applied_path = [_loc for _loc in M if "applied" in _loc]
-            if len(mask_applied_path) == 0:
+            if mask_applied_path := [_loc for _loc in M if "applied" in _loc]:
+                return (
+                    (self.__getitem__(mask_applied_path[0])[()], None)
+                    if not mask_path
+                    else (
+                        self.__getitem__(mask_applied_path[0])[()],
+                        self.__getitem__(mask_path[0])[()],
+                    )
+                )
+            else:
                 return (None, self.__getitem__(mask_path[0])[()])
-            if len(mask_path) == 0:
-                return (self.__getitem__(mask_applied_path[0])[()], None)
-            return (
-                self.__getitem__(mask_applied_path[0])[()],
-                self.__getitem__(mask_path[0])[()],
-            )
         return (None, None)
 
     def get_flafield(self) -> Tuple[bool, ArrayLike]:
-        F = [obj for obj in self.walk if "flatfield" in obj]
-        if len(F) > 0:
+        if F := [obj for obj in self.walk if "flatfield" in obj]:
             flatfield_path = [_loc for _loc in F if _loc.split("/")[-1] == "flatfield"]
-            flatfield_applied_path = [_loc for _loc in F if "applied" in _loc]
-            if len(flatfield_applied_path) == 0:
+            if flatfield_applied_path := [_loc for _loc in F if "applied" in _loc]:
+                return (
+                    (self.__getitem__(flatfield_applied_path[0])[()], None)
+                    if not flatfield_path
+                    else (
+                        self.__getitem__(flatfield_applied_path[0])[()],
+                        self.__getitem__(flatfield_path[0])[()],
+                    )
+                )
+            else:
                 return (None, self.__getitem__(flatfield_path[0])[()])
-            if len(flatfield_path) == 0:
-                return (self.__getitem__(flatfield_applied_path[0])[()], None)
-            return (
-                self.__getitem__(flatfield_applied_path[0])[()],
-                self.__getitem__(flatfield_path[0])[()],
-            )
         return (None, None)
 
     def get_bit_bepth_readout(self) -> int:
         _loc = [obj for obj in self.walk if "bit_depth_readout" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]  # type SCALAR
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_bit_bepth_image(self) -> int:
         _loc = [obj for obj in self.walk if "bit_depth_image" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_detector_number(self) -> str:
         _loc = [obj for obj in self.walk if "detector_number" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_detector_readout_time(self) -> float:
         _loc = [obj for obj in self.walk if "detector_readout_time" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_exposure_time(self) -> float:
         _loc = [obj for obj in self.walk if "count_time" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_photon_energy(self) -> float:
         _loc = [obj for obj in self.walk if "photon_energy" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_countrate_correction(self) -> int:
         _loc = [obj for obj in self.walk if "countrate_correction_applied" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_software_version(self) -> bytes:
         _loc = [obj for obj in self.walk if "software_version" in obj]
-        if len(_loc) == 0:
-            return None
-        return self.__getitem__(_loc[0])[()]
+        return None if not _loc else self.__getitem__(_loc[0])[()]
 
     def get_data_collection_date(self) -> str:
-        _loc = [obj for obj in self.walk if "data_collection_date" in obj]
-        if len(_loc) == 0:
-            return None
-        else:
+        if _loc := [obj for obj in self.walk if "data_collection_date" in obj]:
             collection_date = str(self.__getitem__(_loc[0])[()])[2:21]
             collection_date = datetime.strptime(collection_date, "%Y-%m-%dT%H:%M:%S")
             return collection_date
+        else:
+            return None
 
 
 def extract_exposure_time_from_master(master: Path | str) -> float:

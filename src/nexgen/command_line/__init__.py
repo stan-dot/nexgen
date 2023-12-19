@@ -60,11 +60,11 @@ detectormode_parser.add_argument(
 class _CheckFileExtension(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         condition = any("filename" in v for v in values)
-        if condition is True:
+        if condition:
             i = ["filename" in v for v in values].index(True)
             fname = Path(values[i]).expanduser().resolve()
             ext = fname.suffix
-            if ext != ".h5" and ext != ".nxs":
+            if ext not in [".h5", ".nxs"]:
                 print(
                     f"You specified an invalid extension {ext} for the output file.\n"
                     f"It will be saved to {fname.stem}.nxs instead."

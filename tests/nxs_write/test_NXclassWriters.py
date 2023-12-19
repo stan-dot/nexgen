@@ -170,9 +170,9 @@ def test_given_scan_axis_when_write_NXsample_then_scan_axis_data_copied_from_dat
     assert dummy_nexus_file[axis_entry].attrs["transformation_type"] == b"rotation"
     assert dummy_nexus_file[axis_entry].attrs["units"] == b"deg"
     assert_array_equal(dummy_nexus_file[axis_entry].attrs["vector"][:], [-1, 0, 0])
-    assert_array_equal(dummy_nexus_file[axis_entry + "_increment_set"][()], 1)
+    assert_array_equal(dummy_nexus_file[f"{axis_entry}_increment_set"][()], 1)
     # assert_array_equal(dummy_nexus_file[axis_entry + "_increment_set"][:], [1] * 3)
-    assert dummy_nexus_file[axis_entry + "_end"][1] == 2
+    assert dummy_nexus_file[f"{axis_entry}_end"][1] == 2
 
 
 def test_sample_depends_on_written_correctly_in_NXsample(dummy_nexus_file):
@@ -297,7 +297,7 @@ def test_write_NXdatetime_from_not_ISO8601str(dummy_nexus_file):
     write_NXdatetime(dummy_nexus_file, timestamp_str, "start_time")
 
     assert "start_time" in dummy_nexus_file[entry_path].keys()
-    val = dummy_nexus_file[entry_path + "start_time"][()].decode()
+    val = dummy_nexus_file[f"{entry_path}start_time"][()].decode()
     assert val.endswith("Z")
 
 
@@ -308,7 +308,7 @@ def test_write_NXdatetime_from_datetime(dummy_nexus_file):
     write_NXdatetime(dummy_nexus_file, end_ts, "end_time")
 
     assert "end_time" in dummy_nexus_file[entry_path].keys()
-    val = dummy_nexus_file[entry_path + "end_time"][()].decode()
+    val = dummy_nexus_file[f"{entry_path}end_time"][()].decode()
     assert val.endswith("Z")
 
 
@@ -323,7 +323,7 @@ def test_NXdatetime_exits_before_writing_if_timestamp_is_None(dummy_nexus_file):
     entry_path = "/entry/"
     write_NXdatetime(dummy_nexus_file, None, "end_time_estimated")
 
-    assert entry_path + "end_time_estimated" not in dummy_nexus_file.keys()
+    assert f"{entry_path}end_time_estimated" not in dummy_nexus_file.keys()
 
 
 def test_write_NXnote_in_given_location(dummy_nexus_file):
@@ -333,7 +333,7 @@ def test_write_NXnote_in_given_location(dummy_nexus_file):
 
     assert "pump_status" in dummy_nexus_file[loc_path].keys()
     assert "pump_exp" in dummy_nexus_file[loc_path].keys()
-    assert_array_equal(dummy_nexus_file[loc_path + "pump_exp"][()], 0.001)
+    assert_array_equal(dummy_nexus_file[f"{loc_path}pump_exp"][()], 0.001)
 
 
 def test_write_NXcoordinate_system_set(dummy_nexus_file):
@@ -350,13 +350,13 @@ def test_write_NXcoordinate_system_set(dummy_nexus_file):
     assert "coordinate_system_set" in dummy_nexus_file["/entry/"].keys()
 
     loc = "/entry/coordinate_system_set/transformations/"
-    assert dummy_nexus_file[loc + "depends_on"][()] == b"."
+    assert dummy_nexus_file[f"{loc}depends_on"][()] == b"."
     assert "x" in dummy_nexus_file[loc].keys()
     assert "y" in dummy_nexus_file[loc].keys()
     assert "z" in dummy_nexus_file[loc].keys()
-    assert_array_equal(dummy_nexus_file[loc + "origin"][()], (1, 1, 0))
-    assert_array_equal(dummy_nexus_file[loc + "x"][()], 1)
-    assert_array_equal(dummy_nexus_file[loc + "y"].attrs["vector"], [0, 0, 0])
+    assert_array_equal(dummy_nexus_file[f"{loc}origin"][()], (1, 1, 0))
+    assert_array_equal(dummy_nexus_file[f"{loc}x"][()], 1)
+    assert_array_equal(dummy_nexus_file[f"{loc}y"].attrs["vector"], [0, 0, 0])
 
 
 def test_write_NXcollection_for_images(dummy_nexus_file):
@@ -369,13 +369,15 @@ def test_write_NXcollection_for_images(dummy_nexus_file):
     write_NXcollection(nxdet, test_detector_spec, ("images", 10))
 
     spec = "/entry/instrument/detector/detectorSpecific/"
-    assert dummy_nexus_file[spec + "software_version"][()] == b"0.0.0"
-    assert_array_equal(dummy_nexus_file[spec + "nimages"][()], 10)
+    assert dummy_nexus_file[f"{spec}software_version"][()] == b"0.0.0"
+    assert_array_equal(dummy_nexus_file[f"{spec}nimages"][()], 10)
     assert_array_equal(
-        dummy_nexus_file[spec + "x_pixels"][()], test_detector_spec["image_size"][1]
+        dummy_nexus_file[f"{spec}x_pixels"][()],
+        test_detector_spec["image_size"][1],
     )
     assert_array_equal(
-        dummy_nexus_file[spec + "y_pixels"][()], test_detector_spec["image_size"][0]
+        dummy_nexus_file[f"{spec}y_pixels"][()],
+        test_detector_spec["image_size"][0],
     )
 
 
@@ -393,14 +395,14 @@ def test_write_NXcollection_for_events(dummy_nexus_file):
     write_NXcollection(nxdet, test_detector_spec, ("events", None))
 
     spec = "/entry/instrument/detector/detectorSpecific/"
-    assert dummy_nexus_file[spec + "software_version"][()] == b"0.0.0"
+    assert dummy_nexus_file[f"{spec}software_version"][()] == b"0.0.0"
     assert_array_equal(
-        dummy_nexus_file[spec + "timeslice_rollover_bits"][()],
+        dummy_nexus_file[f"{spec}timeslice_rollover_bits"][()],
         test_detector_spec["timeslice_rollover"],
     )
-    assert_array_equal(dummy_nexus_file[spec + "detector_tick"][()], 1562.5)
-    assert dummy_nexus_file[spec + "detector_tick"].attrs["units"] == b"ps"
-    assert dummy_nexus_file[spec + "detector_frequency"].attrs["units"] == b"Hz"
+    assert_array_equal(dummy_nexus_file[f"{spec}detector_tick"][()], 1562.5)
+    assert dummy_nexus_file[f"{spec}detector_tick"].attrs["units"] == b"ps"
+    assert dummy_nexus_file[f"{spec}detector_frequency"].attrs["units"] == b"Hz"
 
 
 def test_write_NXdetector_for_images_without_meta_file(dummy_nexus_file):
@@ -414,24 +416,29 @@ def test_write_NXdetector_for_images_without_meta_file(dummy_nexus_file):
 
     # Check some general things
     assert (
-        dummy_nexus_file[det + "description"][()] == test_eiger["description"].encode()
+        dummy_nexus_file[f"{det}description"][()]
+        == test_eiger["description"].encode()
     )
-    assert dummy_nexus_file[det + "type"][()] == test_eiger["detector_type"].encode()
+    assert (
+        dummy_nexus_file[f"{det}type"][()]
+        == test_eiger["detector_type"].encode()
+    )
 
     assert_array_equal(
-        dummy_nexus_file[det + "beam_center_x"][()], test_eiger["beam_center"][0]
+        dummy_nexus_file[f"{det}beam_center_x"][()],
+        test_eiger["beam_center"][0],
     )
-    assert dummy_nexus_file[det + "beam_center_y"].attrs["units"] == b"pixels"
-    assert_array_equal(dummy_nexus_file[det + "y_pixel_size"], 7.5e-05)
-    assert dummy_nexus_file[det + "x_pixel_size"].attrs["units"] == b"m"
+    assert dummy_nexus_file[f"{det}beam_center_y"].attrs["units"] == b"pixels"
+    assert_array_equal(dummy_nexus_file[f"{det}y_pixel_size"], 7.5e-05)
+    assert dummy_nexus_file[f"{det}x_pixel_size"].attrs["units"] == b"m"
 
     # Check no mask
     assert "pixel_mask" not in list(dummy_nexus_file[det].keys())
 
     # Check detector axis and distance
-    tr = det + "transformations/"
+    tr = f"{det}transformations/"
     assert "detector_z" in list(dummy_nexus_file[tr].keys())
-    axis_entry = tr + "detector_z/det_z"
+    axis_entry = f"{tr}detector_z/det_z"
     assert_array_equal(test_eiger["starts"], dummy_nexus_file[axis_entry][()])
     assert dummy_nexus_file[axis_entry].attrs["depends_on"] == b"."
     assert dummy_nexus_file[axis_entry].attrs["transformation_type"] == b"translation"
@@ -442,9 +449,9 @@ def test_write_NXdetector_for_images_without_meta_file(dummy_nexus_file):
 
     # Check that distance is in meters instead of mm
     assert_array_equal(
-        dummy_nexus_file[det + "distance"], test_eiger["starts"][0] / 1000
+        dummy_nexus_file[f"{det}distance"], test_eiger["starts"][0] / 1000
     )
-    assert dummy_nexus_file[det + "distance"].attrs["units"] == b"m"
+    assert dummy_nexus_file[f"{det}distance"].attrs["units"] == b"m"
 
     # Check that detector_z has also been written in /detector
     assert "detector_z" in list(dummy_nexus_file[det].keys())
@@ -464,8 +471,8 @@ def test_write_NXinstrument(dummy_nexus_file):
 
     assert "attenuator" in list(dummy_nexus_file[instr].keys())
     assert "beam" in list(dummy_nexus_file[instr].keys())
-    assert dummy_nexus_file[instr + "name"][()] == b"DIAMOND BEAMLINE I03"
-    assert dummy_nexus_file[instr + "name"].attrs["short_name"] == b"DLS I03"
+    assert dummy_nexus_file[f"{instr}name"][()] == b"DIAMOND BEAMLINE I03"
+    assert dummy_nexus_file[f"{instr}name"].attrs["short_name"] == b"DLS I03"
 
 
 def test_write_NXinstrument_sets_correct_instrument_name(dummy_nexus_file):
@@ -481,5 +488,5 @@ def test_write_NXinstrument_sets_correct_instrument_name(dummy_nexus_file):
         "DIAMOND MICROSCOPE",
     )
 
-    assert dummy_nexus_file[instr + "name"][()] == b"DIAMOND MICROSCOPE"
-    assert dummy_nexus_file[instr + "name"].attrs["short_name"] == b"DLS eBic"
+    assert dummy_nexus_file[f"{instr}name"][()] == b"DIAMOND MICROSCOPE"
+    assert dummy_nexus_file[f"{instr}name"].attrs["short_name"] == b"DLS eBic"

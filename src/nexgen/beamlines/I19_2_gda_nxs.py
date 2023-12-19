@@ -312,10 +312,10 @@ def write_nxs(**tr_params):
     logger.info(f"Detector in use for this experiment: {TR.detector_name}.")
     logger.info(f"Current collection directory: {TR.meta_file.parent}")
     # Add some information to logger
-    logger.info("Creating a NeXus file for %s ..." % TR.meta_file.name)
+    logger.info(f"Creating a NeXus file for {TR.meta_file.name} ...")
     # Get NeXus filename
     master_file = get_nexus_filename(TR.meta_file)
-    logger.info("NeXus file will be saved as %s" % master_file)
+    logger.info(f"NeXus file will be saved as {master_file}")
 
     # Get some parameters in here
     if "eiger" in TR.detector_name.lower():

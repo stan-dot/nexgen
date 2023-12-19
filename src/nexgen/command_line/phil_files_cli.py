@@ -57,7 +57,7 @@ def get_beamline_phil(args):
     # Look for file
     filedir = files(templates)
     found = [f for f in sorted(filedir.glob("*.phil")) if args.phil_file == f.name]
-    if len(found) == 0:
+    if not found:
         logger.info(f"No {args.phil_file} found.")
     elif len(found) == 1:
         logger.info(f"{args.phil_file} found. Copying in {odir}.")

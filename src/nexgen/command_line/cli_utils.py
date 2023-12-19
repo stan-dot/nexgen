@@ -50,8 +50,7 @@ def split_arrays(axes_names: List, array: List) -> Dict[str, Tuple]:
     """
     array_dict = {}
     if len(axes_names) == len(array):
-        array_dict = {ax: tuple(v) for ax, v in zip(axes_names, array)}
-        return array_dict
+        return {ax: tuple(v) for ax, v in zip(axes_names, array)}
     elif len(array) == 3 * len(axes_names):
         for j in range(len(axes_names)):
             a = array[3 * j : 3 * j + 3]
@@ -101,7 +100,7 @@ def reframe_arrays(
         split_arrays(detector["axes"], detector["vectors"]).values()
     )
 
-    if "offsets" in module.keys():
+    if "offsets" in module:
         module["offsets"] = list(
             split_arrays(["fast_axis", "slow_axis"], module["offsets"]).values()
         )
@@ -119,7 +118,7 @@ def reframe_arrays(
             # Module
             module["fast_axis"] = imgcif2mcstas(module["fast_axis"])
             module["slow_axis"] = imgcif2mcstas(module["slow_axis"])
-            if "offsets" in module.keys():
+            if "offsets" in module:
                 module["offsets"] = [imgcif2mcstas(off) for off in module["offsets"]]
         else:
             if coordinate_frame != new_coord_system["convention"]:
@@ -149,7 +148,7 @@ def reframe_arrays(
             # Module
             module["fast_axis"] = coord2mcstas(module["fast_axis"], mat)
             module["slow_axis"] = coord2mcstas(module["slow_axis"], mat)
-            if "offsets" in module.keys():
+            if "offsets" in module:
                 module["offsets"] = [
                     coord2mcstas(off, mat) for off in module["offsets"]
                 ]
@@ -243,11 +242,9 @@ def find_grid_scan_axes(
     axes_starts = [axes_starts[j] for j in grid_idx]
     axes_ends = [axes_ends[j] for j in grid_idx]
 
-    scan_axis = []
-    for n, ax in enumerate(axes_names):
-        if axes_starts[n] != axes_ends[n]:
-            scan_axis.append(ax)
-    return scan_axis
+    return [
+        ax for n, ax in enumerate(axes_names) if axes_starts[n] != axes_ends[n]
+    ]
 
 
 def calculate_scan_range(
@@ -305,24 +302,23 @@ def calculate_scan_range(
             "For a 2D scan it is recommended that n_images is passed."
         )
 
-    if len(axes_names) == 1 and rotation is True:
+    if len(axes_names) == 1 and rotation:
         if not n_images:
             n_images = round(abs(axes_starts[0] - axes_ends[0]) / axes_increments[0])
 
-        if axes_starts[0] != axes_ends[0] and axes_increments:
-            if axes_starts[0] > axes_ends[0]:
-                # Account for reverse rotation.
-                axes_ends[0] = axes_ends[0] + axes_increments[0]
+        if axes_starts[0] != axes_ends[0]:
+            if axes_increments:
+                if axes_starts[0] > axes_ends[0]:
+                    # Account for reverse rotation.
+                    axes_ends[0] = axes_ends[0] + axes_increments[0]
+                else:
+                    axes_ends[0] = axes_ends[0] - axes_increments[0]
             else:
-                axes_ends[0] = axes_ends[0] - axes_increments[0]
-        elif axes_starts[0] != axes_ends[0] and not axes_increments:
-            inc = (axes_ends[0] - axes_starts[0]) / n_images
-            axes_ends[0] = axes_ends[0] - inc
+                inc = (axes_ends[0] - axes_starts[0]) / n_images
+                axes_ends[0] = axes_ends[0] - inc
 
         spec = Line(axes_names[0], axes_starts[0], axes_ends[0], n_images)
-        scan_path = ScanPath(spec.calculate())
-
-    elif len(axes_names) == 1 and rotation is False:
+    elif len(axes_names) == 1:
         if not n_images:
             # FIXME This calculation still gives the wrong increment between scan points.
             n_images = (
@@ -333,8 +329,6 @@ def calculate_scan_range(
             n_images = n_images[0]
 
         spec = Line(axes_names[0], axes_starts[0], axes_ends[0], n_images)
-        scan_path = ScanPath(spec.calculate())
-
     else:
         if not n_images:
             # FIXME This calculation still gives the wrong increment between scan points.
@@ -353,7 +347,7 @@ def calculate_scan_range(
             n_images0 = n_images[0]
             n_images1 = n_images[1]
 
-        if snaked is True:
+        if snaked:
             spec = Line(axes_names[0], axes_starts[0], axes_ends[0], n_images0) * ~Line(
                 axes_names[1], axes_starts[1], axes_ends[1], n_images1
             )
@@ -361,7 +355,7 @@ def calculate_scan_range(
             spec = Line(axes_names[0], axes_starts[0], axes_ends[0], n_images0) * Line(
                 axes_names[1], axes_starts[1], axes_ends[1], n_images1
             )
-        scan_path = ScanPath(spec.calculate())
+    scan_path = ScanPath(spec.calculate())
 
     return scan_path.consume().midpoints
 
@@ -416,7 +410,12 @@ def ScanReader(
         transl_start = [goniometer["starts"][i] for i in transl_idx]
         transl_end = [goniometer["ends"][i] for i in transl_idx]
         transl_increment = [goniometer["increments"][i] for i in transl_idx]
-        if n_images and isinstance(n_images, int):
+        if (
+            n_images
+            and isinstance(n_images, int)
+            or not n_images
+            or type(n_images) is not tuple
+        ):
             TRANSL = calculate_scan_range(
                 transl_axes,
                 transl_start,
@@ -425,13 +424,9 @@ def ScanReader(
                 # (n_images,),
                 snaked=snaked,
             )
-        elif n_images and type(n_images) is tuple:
-            TRANSL = calculate_scan_range(
-                transl_axes, transl_start, transl_end, n_images=n_images, snaked=snaked
-            )
         else:
             TRANSL = calculate_scan_range(
-                transl_axes, transl_start, transl_end, transl_increment, snaked=snaked
+                transl_axes, transl_start, transl_end, n_images=n_images, snaked=snaked
             )
         logger.debug(f"{len(transl_axes)} scan axis/axes found (translation).")
     else:
@@ -447,32 +442,28 @@ def ScanReader(
         # FIXME This is actually not needed.
         for k, s, e in zip(transl_axes, transl_start, transl_end):
             TRANSL[k] = (s, e)
-    else:
-        if n_images is None and len(transl_axes) == 0:
-            OSC = calculate_scan_range(
-                [osc_axis],
-                [goniometer["starts"][osc_idx]],
-                [goniometer["ends"][osc_idx]],
-                axes_increments=[goniometer["increments"][osc_idx]],
-                rotation=True,
-            )
-        elif n_images is None and len(transl_axes) > 0:
-            ax = transl_axes[0]
-            n_images = len(TRANSL[ax])
-            OSC = calculate_scan_range(
-                [osc_axis],
-                [goniometer["starts"][osc_idx]],
-                [goniometer["ends"][osc_idx]],
-                n_images=n_images,
-                rotation=True,
-            )
-        elif n_images is not None and len(transl_axes) > 0:
-            ax = transl_axes[0]
-            n_images = np.prod(n_images) if type(n_images) is tuple else n_images
-            if n_images != len(TRANSL[ax]):
-                raise ValueError(
-                    "The value passed as the total number of images doesn't match the number of scan points, please check the input."
-                )
+    elif n_images is None and len(transl_axes) == 0:
+        OSC = calculate_scan_range(
+            [osc_axis],
+            [goniometer["starts"][osc_idx]],
+            [goniometer["ends"][osc_idx]],
+            axes_increments=[goniometer["increments"][osc_idx]],
+            rotation=True,
+        )
+    elif n_images is None and len(transl_axes) > 0:
+        ax = transl_axes[0]
+        n_images = len(TRANSL[ax])
+        OSC = calculate_scan_range(
+            [osc_axis],
+            [goniometer["starts"][osc_idx]],
+            [goniometer["ends"][osc_idx]],
+            n_images=n_images,
+            rotation=True,
+        )
+    elif n_images is not None and len(transl_axes) > 0:
+        ax = transl_axes[0]
+        n_images = np.prod(n_images) if type(n_images) is tuple else n_images
+        if n_images == len(TRANSL[ax]):
             #
             OSC = calculate_scan_range(
                 [osc_axis],
@@ -482,14 +473,18 @@ def ScanReader(
                 rotation=True,
             )
         else:
-            n_images = np.prod(n_images) if type(n_images) is tuple else n_images
-            OSC = calculate_scan_range(
-                [osc_axis],
-                [goniometer["starts"][osc_idx]],
-                [goniometer["ends"][osc_idx]],
-                n_images=n_images,
-                rotation=True,
+            raise ValueError(
+                "The value passed as the total number of images doesn't match the number of scan points, please check the input."
             )
+    else:
+        n_images = np.prod(n_images) if type(n_images) is tuple else n_images
+        OSC = calculate_scan_range(
+            [osc_axis],
+            [goniometer["starts"][osc_idx]],
+            [goniometer["ends"][osc_idx]],
+            n_images=n_images,
+            rotation=True,
+        )
 
     logger.debug(f"{osc_axis} set as rotation axis.")
     return OSC, TRANSL
@@ -546,7 +541,7 @@ def call_writers(
     )
 
     # Check that filenames are paths
-    if all(isinstance(f, Path) for f in datafiles) is False:
+    if not all(isinstance(f, Path) for f in datafiles):
         datafiles = [Path(f).expanduser().resolve() for f in datafiles]
 
     if metafile:
@@ -695,11 +690,11 @@ def write_nexus_from_scope(
         goniometer.__dict__,
         data_type[0],
         n_images=data_type[1],
-        snaked=params["snaked"] if "snaked" in params.keys() else True,
+        snaked=params.get("snaked", True),
     )
 
     # Log scan information
-    writer_logger.info("Coordinate system: %s" % coordinate_frame)
+    writer_logger.info(f"Coordinate system: {coordinate_frame}")
     writer_logger.info(f"Rotation scan axis: {list(OSC.keys())[0]}.")
     writer_logger.info(
         f"Scan from {list(OSC.values())[0][0]} to {list(OSC.values())[0][-1]}.\n"
@@ -723,11 +718,7 @@ def write_nexus_from_scope(
             n_files = 10 if "10M" in detector.description.upper() else 2
         else:
             # The maximum number of images being written each dataset is 1000
-            if data_type[1] <= 1000:
-                n_files = 1
-            else:
-                n_files = int(np.ceil(data_type[1] / 1000))
-
+            n_files = 1 if data_type[1] <= 1000 else int(np.ceil(data_type[1] / 1000))
         writer_logger.info(
             f"{n_files} file(s) containing blank {data_type[0]} data to be written."
         )
@@ -754,11 +745,11 @@ def write_nexus_from_scope(
             )
 
     # If _meta.h5 file is passed, look through it for relevant information
-    if "meta" in params.keys():
+    if "meta" in params:
         writer_logger.info("Looking through _meta.h5 file for metadata.")
         metafile = (
             Path(params["meta"]).expanduser().resolve()
-            if isinstance(params["meta"], str) is False
+            if not isinstance(params["meta"], str)
             else params["meta"]
         )
         do_not_link = params["ignore_meta"]
@@ -772,7 +763,7 @@ def write_nexus_from_scope(
         link_list = None
 
     # Log detector information
-    if "TRISTAN" in detector.description.upper() and "tristanSpec" in params.keys():
+    if "TRISTAN" in detector.description.upper() and "tristanSpec" in params:
         from ..command_line import add_tristan_spec
 
         add_tristan_spec(detector, params["tristanSpec"])
@@ -840,7 +831,7 @@ def write_nexus_from_scope(
     )
 
     # Write VDS if prompted
-    if "vds" in params.keys():
+    if "vds" in params:
         if data_type[0] == "images" and params["vds"] == "dataset":
             writer_logger.info(
                 "Calling VDS writer to write a Virtual Dataset under /entry/data/data"
@@ -855,7 +846,7 @@ def write_nexus_from_scope(
             writer_logger.info("VDS won't be written.")
 
     # Write timestamps if prompted
-    if "timestamps" in params.keys():
+    if "timestamps" in params:
         timestamps = params["timestamps"]
         writer_logger.info("Writing recorded timestamps.")
         # NX_DATE_TIME: /entry/start_time and /entry/end_time
@@ -865,7 +856,7 @@ def write_nexus_from_scope(
             write_NXdatetime(nxs_file, timestamps[1], "end_time")
 
     # Write any notes that might have been passed as NXnote
-    if "notes" in params.keys():
+    if "notes" in params:
         writer_logger.info(
             f"Writing NXnote in requested location {params['notes'][0]}."
         )
