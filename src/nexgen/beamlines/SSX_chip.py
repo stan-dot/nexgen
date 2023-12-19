@@ -80,17 +80,12 @@ def fullchip_conversion_table(chip: Chip) -> Dict:
         Dict: Conversion table, keys are block numbers, values are coordinates.
     """
     coords = []
-    table = {}
     for i in range(chip.num_blocks[0]):
         if i % 2 == 0:
-            for j in range(chip.num_blocks[1]):
-                coords.append((i, j))
+            coords.extend((i, j) for j in range(chip.num_blocks[1]))
         else:
-            for j in range(chip.num_blocks[1] - 1, -1, -1):
-                coords.append((i, j))
-    for k, v in zip(range(1, chip.tot_blocks() + 1), coords):
-        table[f"%0{2}d" % k] = v
-    return table
+            coords.extend((i, j) for j in range(chip.num_blocks[1] - 1, -1, -1))
+    return {'%02d' % k: v for k, v in zip(range(1, chip.tot_blocks() + 1), coords)}
 
 
 def read_chip_map(mapfile: Path | str, x_blocks: int, y_blocks: int) -> Dict:
@@ -110,17 +105,15 @@ def read_chip_map(mapfile: Path | str, x_blocks: int, y_blocks: int) -> Dict:
         # Assume it's a full chip
         return {"all": "fullchip"}
 
-    with open(mapfile) as f:
-        chipmap = f.read()
-
+    chipmap = Path(mapfile).read_text()
     block_list = []
     max_num_blocks = x_blocks * y_blocks
     for n, line in enumerate(chipmap.rsplit("\n")):
         if n == max_num_blocks:
             break
-        k = line[:2]
         v = line[-1:]
         if v == "1":
+            k = line[:2]
             block_list.append(k)
     if len(block_list) == max_num_blocks:
         # blocks["fullchip"] = len(block_list)
@@ -187,7 +180,7 @@ def compute_goniometer(
 
     axes_starts = {}
 
-    if full is True:
+    if full:
         for x in range(chip.num_blocks[0]):
             x_start = x0 + x * chip.block_size[0]
             if x % 2 == 0:

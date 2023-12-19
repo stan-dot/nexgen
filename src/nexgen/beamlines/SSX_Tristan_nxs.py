@@ -112,12 +112,14 @@ def ssx_tristan_writer(
     logger.info(f"Current collection directory: {visitpath.as_posix()}")
     # Get NeXus filename
     master_file = visitpath / f"{filename}.nxs"
-    logger.info("NeXus file will be saved as %s" % master_file.as_posix())
+    logger.info(f"NeXus file will be saved as {master_file.as_posix()}")
 
     # Check if metafile in directory.
     try:
         metafile = [
-            f for f in visitpath.iterdir() if filename + "_meta" in f.as_posix()
+            f
+            for f in visitpath.iterdir()
+            if f"{filename}_meta" in f.as_posix()
         ][0]
         logger.info(f"Found {metafile} in directory.")
     except IndexError:
@@ -149,7 +151,7 @@ def ssx_tristan_writer(
     attenuator = Attenuator(SSX_TR.transmission)
     # Define Beam
     wl = SSX_TR.wavelength
-    flux = ssx_params["flux"] if "flux" in ssx_params.keys() else None
+    flux = ssx_params.get("flux", None)
     beam = Beam(wl, flux)
 
     # Define Detector axes

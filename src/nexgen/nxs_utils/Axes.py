@@ -60,10 +60,7 @@ class Axis:
 
     @property
     def units(self) -> str:
-        if self.transformation_type == "translation":
-            return "mm"
-        else:
-            return "deg"
+        return "mm" if self.transformation_type == "translation" else "deg"
 
     @property
     def end_pos(self) -> float:
@@ -72,6 +69,4 @@ class Axis:
 
     @property
     def is_scan(self) -> bool:
-        if self.increment != 0.0:
-            return True
-        return False
+        return self.increment != 0.0

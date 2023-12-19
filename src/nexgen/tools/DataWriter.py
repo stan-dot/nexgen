@@ -68,12 +68,11 @@ def build_an_eiger(
             :,
         ] = -1
 
-    # Intra module gap
-    mid = []
-    for n in range(n_modules[0]):
-        mid.append(
-            int(eiger_mod_size[1] / 2) + n * (eiger_mod_size[1] + eiger_gap_size[1])
-        )
+    mid = [
+        int(eiger_mod_size[1] / 2)
+        + n * (eiger_mod_size[1] + eiger_gap_size[1])
+        for n in range(n_modules[0])
+    ]
     for m in mid:
         IM[:, (m - 1) : (m + 1)] = -1
 

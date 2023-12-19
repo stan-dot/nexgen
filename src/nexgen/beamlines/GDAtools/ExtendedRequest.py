@@ -23,22 +23,24 @@ class ExtendedRequestIO:
 
     def getOscillationSequence(self) -> Dict[str, float]:
         osc_seq_node = self.root.find(".//oscillation_sequence")
-        osc_seq = {
+        return {
             "start": float(osc_seq_node.find(".//start").text),
             "range": float(osc_seq_node.find(".//range").text),
-            "number_of_images": float(osc_seq_node.find(".//number_of_images").text),
+            "number_of_images": float(
+                osc_seq_node.find(".//number_of_images").text
+            ),
             "exposure_time": float(osc_seq_node.find(".//exposure_time").text),
-            "number_of_passes": float(osc_seq_node.find(".//number_of_passes").text),
+            "number_of_passes": float(
+                osc_seq_node.find(".//number_of_passes").text
+            ),
         }
-        return osc_seq
 
     def getAxisChoice(self) -> str:
         ax = self.root.find(".//axisChoice").text
         return ax.lower()
 
     def getOtherAxis(self) -> float:
-        val = float(self.root.find(".//otherAxis").text)
-        return val
+        return float(self.root.find(".//otherAxis").text)
 
     def getKappa(self) -> float:
         return float(self.root.find(".//kappa").text)
@@ -74,13 +76,12 @@ def read_scan_from_xml(ecr: ExtendedRequestIO):
     """
     # Goniometer
     osc_seq = ecr.getOscillationSequence()
+    num = osc_seq["number_of_images"]
     # Find scan range
     if osc_seq["range"] == 0.0:
         scan_range = (osc_seq["start"], osc_seq["start"])
-        num = osc_seq["number_of_images"]
     else:
         start = osc_seq["start"]
-        num = osc_seq["number_of_images"]
         stop = start + num * osc_seq["range"]
         scan_range = (start, stop)
     # Determine scan axis

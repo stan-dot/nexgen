@@ -83,14 +83,14 @@ def singla_nexus_writer(
 
     logger.info("NeXus file writer for electron diffraction data from Singla.")
     logger.info(f"Collection directory: {master_file.parent}.")
-    logger.info("NeXus file will be saved as %s" % nxsfile.name)
+    logger.info(f"NeXus file will be saved as {nxsfile.name}")
 
     # Data files
     if not datafiles:
         datafiles = [
             f
             for f in master_file.parent.iterdir()
-            if nxsfile.stem + "_data" in f.as_posix()
+            if f"{nxsfile.stem}_data" in f.as_posix()
         ]
     logger.info(f"{len(datafiles)} data files in directory.")
 
@@ -176,9 +176,7 @@ def singla_nexus_writer(
         gonio_axes[1].depends = params["scan_axis"][0]
         gonio_axes[0].start_pos = params["scan_axis"][1]
         gonio_axes[0].increment = params["scan_axis"][2]
-        gonio_axes[0].num_steps = tot_num_imgs
-    else:
-        gonio_axes[0].num_steps = tot_num_imgs
+    gonio_axes[0].num_steps = tot_num_imgs
     # No grid scan, can be added if needed at later time
     OSC = calculate_scan_points(
         gonio_axes[0],

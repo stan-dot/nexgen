@@ -81,7 +81,7 @@ def get_nexus_tree(
     """
     skip_obj = ["NXdata"] if skip_obj is None else skip_obj
 
-    if skip is True:
+    if skip:
         nxentry = nxs_out.create_group("entry")
         create_attributes(nxentry, ("NX_class", "default"), ("NXentry", "data"))
         # Copy all of the nexus tree as it is except for the group passed as skip_obj
@@ -114,10 +114,14 @@ def identify_tristan_scan_axis(nxs_in: h5py.File) -> Tuple[str | None, Dict[str,
         ax_attrs (Dict[str, Any]): Attributes of the scan_axis dataset.
     """
     nxdata = nxs_in["entry/data"]
-    for ax, h5_object in nxdata.items():
-        if h5str(h5_object.attrs.get("transformation_type")) == "rotation":
-            return ax, dict(h5_object.attrs)
-    return None, {}
+    return next(
+        (
+            (ax, dict(h5_object.attrs))
+            for ax, h5_object in nxdata.items()
+            if h5str(h5_object.attrs.get("transformation_type")) == "rotation"
+        ),
+        (None, {}),
+    )
 
 
 def convert_scan_axis(nxsample: h5py.Group, nxdata: h5py.Group, ax: str):
@@ -129,11 +133,9 @@ def convert_scan_axis(nxsample: h5py.Group, nxdata: h5py.Group, ax: str):
         nxdata (h5py.Group): NXdata group of NeXus file to be modified.
         ax (str): Name of scan_axis.
     """
-    del nxsample["transformations/" + ax]
-    nxsample["transformations/" + ax] = nxdata[ax]
-    name = (
-        "sample_" + ax + "/" + ax if "sam" not in ax else "sample_" + ax[-1] + "/" + ax
-    )
+    del nxsample[f"transformations/{ax}"]
+    nxsample[f"transformations/{ax}"] = nxdata[ax]
+    name = f"sample_{ax}/{ax}" if "sam" not in ax else f"sample_{ax[-1]}/{ax}"
     del nxsample[name]
     nxsample[name] = nxdata[ax]
 
@@ -141,12 +143,10 @@ def convert_scan_axis(nxsample: h5py.Group, nxdata: h5py.Group, ax: str):
 def check_and_fix_det_axis(nxs_in: h5py.File):
     det_z_grp = nxs_in["/entry/instrument/detector/transformations/detector_z"]
     det_z = det_z_grp["det_z"]
-    if isinstance(det_z[()], bytes) or isinstance(det_z[()], str):
-        det_z_attrs = {}
-        for k, v in det_z.attrs.items():
-            det_z_attrs[k] = v
+    if isinstance(det_z[()], (bytes, str)):
+        det_z_attrs = dict(det_z.attrs.items())
         dist = float(det_z[()])
-        dist = units_of_length(str(dist) + "mm")
+        dist = units_of_length(f"{dist}mm")
 
         del nxs_in["/entry/instrument/detector/transformations/detector_z/det_z"]
         nxdet_z = det_z_grp.create_dataset("det_z", data=np.array([dist.magnitude]))
@@ -178,10 +178,7 @@ def is_chipmap_in_tristan_nxs(
         bool: Returns True is a chipmap is found, False otherwise.
     """
     obj_list = walk_nxs(nxobj)
-    if loc in obj_list:
-        return True
-    else:
-        return False
+    return loc in obj_list
 
 
 def compute_ssx_axes(
@@ -222,11 +219,10 @@ def compute_ssx_axes(
         chip_info = {k: v[1] for k, v in CHIP_DICT_DEFAULT.items()}
         # Assume 400 imgs each block in the chip
         n_blocks = nbins // 400
-        key = [f"%0{2}d" % bl for bl in range(1, n_blocks + 1)]
+        key = ['%02d' % bl for bl in range(1, n_blocks + 1)]
         val = []
         for i in range(chip_info["X_NUM_BLOCKS"]):
-            for j in range(chip_info["Y_NUM_BLOCKS"]):
-                val.append((i, j))
+            val.extend((i, j) for j in range(chip_info["Y_NUM_BLOCKS"]))
         blocks = {key[i]: val[i] for i in range(len(key))}
         pp.exposure = nxs_in["/entry/source/notes/pump_exposure_time"][()]
         pp.delay = nxs_in["/entry/source/notes/pump_delay"][()]

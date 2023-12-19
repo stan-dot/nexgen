@@ -40,10 +40,10 @@ def images_nexus(
     original_nexus = Path(original_nexus).expanduser().resolve()
     nxs_filename = get_nexus_filename(data_file[0], copy=True)
     copy_logger.info(f"New NeXus file name: {nxs_filename}")
-    with h5py.File(original_nexus, "r") as nxs_in, h5py.File(
-        nxs_filename, "x"
-    ) as nxs_out:
-        if simple_copy is True:
+    with (h5py.File(original_nexus, "r") as nxs_in, h5py.File(
+            nxs_filename, "x"
+        ) as nxs_out):
+        if simple_copy:
             # Copy the whole tree
             get_nexus_tree(nxs_in, nxs_out, skip=False)
         else:
@@ -61,7 +61,7 @@ def images_nexus(
                 for k in nxs_in["entry/data"].keys():
                     if "depends_on" in nxs_in["entry/data"][k].attrs.keys():
                         ax = k
-                        nxs_in["entry/data"].copy(k, nxdata)
+                        nxs_in["entry/data"].copy(ax, nxdata)
                 create_attributes(
                     nxdata, ("NX_class", "axes", "signal"), ("NXdata", ax, "data")
                 )

@@ -48,12 +48,11 @@ def set_dependency(dep_info: str, path: str = None):
     """
     if dep_info == ".":
         return np.string_(".")
-    if path:
-        if path.endswith("/") is False:
-            path += "/"
-        return np.string_(path + dep_info)
-    else:
+    if not path:
         return np.string_(dep_info)
+    if path.endswith("/") is False:
+        path += "/"
+    return np.string_(path + dep_info)
 
 
 def calculate_origin(
@@ -92,10 +91,7 @@ def calculate_origin(
         slow_axis_vector
     )
     det_origin = list(-det_origin)
-    if mode == "1":
-        offset_val = 1.0
-    else:
-        offset_val = math.hypot(*det_origin[:-1])
+    offset_val = 1.0 if mode == "1" else math.hypot(*det_origin[:-1])
     return det_origin, offset_val
 
 

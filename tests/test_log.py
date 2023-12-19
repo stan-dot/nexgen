@@ -8,8 +8,7 @@ from nexgen import log
 
 @pytest.fixture
 def dummy_logger():
-    logger = logging.getLogger("nexgen")
-    yield logger
+    yield logging.getLogger("nexgen")
 
 
 def test_basic_logging_config(dummy_logger):

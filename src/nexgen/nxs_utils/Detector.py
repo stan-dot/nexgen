@@ -73,10 +73,7 @@ class EigerDetector(DataClassJsonMixin):
 
     @property
     def sensor_thickness(self) -> str:
-        if self.sensor_material == "Si":
-            return "0.450mm"
-        else:
-            return "0.750mm"
+        return "0.450mm" if self.sensor_material == "Si" else "0.750mm"
 
     @property
     def constants(self) -> Dict:
@@ -216,12 +213,11 @@ class Detector:
         return detector
 
     def _generate_module_dict(self):
-        module = {
+        return {
             "module_offset": "1",
             "fast_axis": [self.fast_axis.x, self.fast_axis.y, self.fast_axis.z],
             "slow_axis": [self.slow_axis.x, self.slow_axis.y, self.slow_axis.z],
         }
-        return module
 
     def get_detector_description(self) -> str:
         return self.detector_params.description

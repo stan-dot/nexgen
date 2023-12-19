@@ -74,21 +74,23 @@ def nexgen_writer(args):
             raise OSError("Missing axes values.")
 
     if args.axes and args.ax_start:
+        axes_list = []
         if args.detector_name == "eiger":
-            axes_list = []
-            for ax, s, i in zip(args.axes, args.ax_start, args.ax_inc):
-                axes_list.append(axes(id=ax, start=s, inc=i))
+            axes_list.extend(
+                axes(id=ax, start=s, inc=i)
+                for ax, s, i in zip(args.axes, args.ax_start, args.ax_inc)
+            )
         else:
             axes = namedtuple("axes", ("id", "start", "end"))
-            axes_list = []
-            for ax, s, e in zip(args.axes, args.ax_start, args.ax_end):
-                axes_list.append(axes(id=ax, start=s, end=e))
-
+            axes_list.extend(
+                axes(id=ax, start=s, end=e)
+                for ax, s, e in zip(args.axes, args.ax_start, args.ax_end)
+            )
     if args.det_axes and args.det_start:
-        det_list = []
-        for ax, s in zip(args.det_axes, args.det_start):
-            det_list.append(det_axes(id=ax, start=s))
-
+        det_list = [
+            det_axes(id=ax, start=s)
+            for ax, s in zip(args.det_axes, args.det_start)
+        ]
     # Check that an actual meta file has been passed and not a data file
     if "meta" not in args.meta_file:
         logger.error(

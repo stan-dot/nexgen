@@ -65,7 +65,7 @@ def identify_osc_axis(
         scan_axis (str): String identifying the rotation scan axis.
     """
     # This assumes that at least one axis is always passed.
-    if len(axes_list) == 0:
+    if not axes_list:
         raise ScanAxisNotFoundError(
             "Impossible to determine oscillation scan axis. No axes passed to function. Please make sure at least one value is passed."
         )
@@ -73,15 +73,14 @@ def identify_osc_axis(
     rot_axes = [ax for ax in axes_list if ax.transformation_type == "rotation"]
     if len(rot_axes) == 1:
         return rot_axes[0].name
-    else:
-        scan_idx = [ax.is_scan for ax in rot_axes]
-        if scan_idx.count(True) == 0:
-            return default
-        if scan_idx.count(True) > 1:
-            raise ScanAxisNotFoundError(
-                "Unable to correctly identify the rotation scan axis."
-            )
-        return rot_axes[scan_idx.index(True)].name
+    scan_idx = [ax.is_scan for ax in rot_axes]
+    if scan_idx.count(True) == 0:
+        return default
+    if scan_idx.count(True) > 1:
+        raise ScanAxisNotFoundError(
+            "Unable to correctly identify the rotation scan axis."
+        )
+    return rot_axes[scan_idx.index(True)].name
 
 
 def identify_grid_scan_axes(
@@ -99,15 +98,14 @@ def identify_grid_scan_axes(
     Returns:
         scan_axis (List[str]): List of strings identifying the linear/grid scan axes. If no axes are identified, it will return an empty list.
     """
-    if len(axes_list) == 0:
+    if not axes_list:
         raise ScanAxisNotFoundError(
             "Impossible to determine translation scan. No axes passed to function. Please make sure at least one value is passed."
         )
 
     # Look only at translation axes
     tr_axes = [ax for ax in axes_list if ax.transformation_type == "translation"]
-    grid_axes = [ax.name for ax in tr_axes if ax.is_scan is True]
-    return grid_axes
+    return [ax.name for ax in tr_axes if ax.is_scan is True]
 
 
 def calculate_scan_points(
@@ -139,7 +137,7 @@ def calculate_scan_points(
         Dict[str, ArrayLike]: A dictionary of ("axis_name": axis_range) key-value pairs.
     """
 
-    if rotation is True:
+    if rotation:
         if axis1.transformation_type != "rotation":
             raise ScanAxisError(
                 f"Wrong transformation type: a {axis1.transformation_type} has been passed for a rotation scan."
@@ -172,7 +170,7 @@ def calculate_scan_points(
             axis1.end_pos,
             axis1.num_steps,
         )
-    elif axis2 and snaked is True:
+    elif axis2 and snaked:
         spec = Line(
             axis1.name,
             axis1.start_pos,

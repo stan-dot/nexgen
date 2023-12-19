@@ -427,11 +427,11 @@ def nexus_writer(
     logger.info(f"Current collection directory: {TR.meta_file.parent}")
 
     # Add some information to logger
-    logger.info("Creating a NeXus file for %s ..." % TR.meta_file.name)
+    logger.info(f"Creating a NeXus file for {TR.meta_file.name} ...")
     # Get NeXus filename
     master_file = get_nexus_filename(TR.meta_file)
     master_file = wdir / master_file.name
-    logger.info("NeXus file will be saved as %s" % master_file)
+    logger.info(f"NeXus file will be saved as {master_file}")
 
     # Get timestamps in the correct format if they aren't already
     timestamps = (
