@@ -11,6 +11,6 @@ metadata:
     - Python
     - Nexus
 spec:
-  type: application
+  type: service
   lifecycle: production
   owner: group:data-acquisition
